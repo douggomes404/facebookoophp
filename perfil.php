@@ -22,6 +22,11 @@ if(!$id){
 if($id != $userInfo->id){
     $activeMenu = '';
 }
+//Pegar informações de paginação;
+$page = intval(filter_input(INPUT_GET,'p'));
+if($page <1){
+    $page = 1;
+}
 
 $postDao = new PostDaoMysql($pdo);
 $userDao = new UserDaoMysql($pdo); 
@@ -39,7 +44,10 @@ $user->ageYears = $dateFrom->diff($dateTo)->y;
 
 
 //Pegar o feed do usuário;
-$feed = $postDao->getUserFeed($id);
+$info = $postDao->getUserFeed($id, $page);
+$info = $info['feed'];
+$pages = $info['pages'];
+$currentPage = $info['currentPage'];
 
 //Verificar se eu sigo o usuário. 
 $isFollowing = $userRelationDao->isFollowing($userInfo->id, $id);
@@ -168,14 +176,16 @@ require 'partials/menu.php';
                         
                 <?php if(count($user->photos)>0):?>
                     <?php foreach($user->photos as $key => $item): ?>
-                        <div class="user-photo-item">
-                            <a href="#modal-<?=$key?>" rel="modal:open">
-                                <img src="<?=$base;?>media/uploads/<?=$item->body;?>" />
-                            </a>
-                            <div id="modal-<?=$key?>" style="display:none">
-                                <img src="<?=$base;?>media/uploads/<?=$item->body;?>" />
+                        <?php if($key < 4): ?>
+                            <div class="user-photo-item">
+                                <a href="#modal-<?=$key?>" rel="modal:open">
+                                    <img src="<?=$base;?>media/uploads/<?=$item->body;?>" />
+                                </a>
+                                <div id="modal-<?=$key?>" style="display:none">
+                                    <img src="<?=$base;?>media/uploads/<?=$item->body;?>" />
+                                </div>
                             </div>
-                        </div>
+                        <?php endif; ?>
                     <?php endforeach;?>
                 <?php endif;?>
                 
@@ -190,6 +200,13 @@ require 'partials/menu.php';
             <?php foreach($feed as $item): ?>
                 <?php require 'partials/feed-item.php';?>
             <?php endforeach;?>
+            
+            <div class="feed-pagination">
+                <?php for($q=0;$q<$pages;$q++): ?>
+                    <a class="<?=($q+1==$currentPage)?'active':'';?>" href="<?=$base;?>perfil.php?id=<?=$id?>&p=<?=$q+1;?>"><?=$q+1;?></a>
+                <?php endfor;?>
+            </div>
+
         <?php else :?>
             Não há postagens deste usuário
         <?php endif;?>
