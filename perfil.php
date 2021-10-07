@@ -2,6 +2,7 @@
 require_once 'config.php';
 require_once 'models/Auth.php';
 require_once 'dao/PostDaoMysql.php';
+require_once 'dao/UserRelationDaoMysql.php';
 
 
 
@@ -24,6 +25,7 @@ if($id != $userInfo->id){
 
 $postDao = new PostDaoMysql($pdo);
 $userDao = new UserDaoMysql($pdo); 
+$userRelationDao = new UserRelationDaoMysql($pdo);
 
 //Pegar informações do usuário.
 $user = $userDao->findById($id, true);
@@ -40,6 +42,7 @@ $user->ageYears = $dateFrom->diff($dateTo)->y;
 $feed = $postDao->getUserFeed($id);
 
 //Verificar se eu sigo o usuário. 
+$isFollowing = $userRelationDao->isFollowing($userInfo->id, $id);
 
 /*
 ;
@@ -63,10 +66,15 @@ require 'partials/menu.php';
                 <div class="profile-info-name">
                     <div class="profile-info-name-text"><?=$user->name;?></div>
                     <?php if(!empty($user->city)):?>
-                    <div class="profile-info-location"><?=$user->dity;?></div>
+                    <div class="profile-info-location"><?=$user->city;?></div>
                     <?php endif;?>
                 </div>
                 <div class="profile-info-data row">
+                    <?php if($id != $userInfo->id):?>    
+                    <div class="profile-info-item m-width-20">
+                        <a href="follow_action.php?id=<?=$id;?>" class="button"><?=(!$isFollowing)?'Seguir':'Deixar de Seguir';?></a>
+                    </div>
+                    <?php endif;?>
                     <div class="profile-info-item m-width-20">
                         <div class="profile-info-item-n"><?=count($user->followers);?></div>
                         <div class="profile-info-item-s">Seguidores</div>
@@ -159,12 +167,12 @@ require 'partials/menu.php';
             <div class="box-body row m-20">
                         
                 <?php if(count($user->photos)>0):?>
-                    <?php foreach($user->photos as $item): ?>
+                    <?php foreach($user->photos as $key => $item): ?>
                         <div class="user-photo-item">
-                            <a href="#modal-1" rel="modal:open">
+                            <a href="#modal-<?=$key?>" rel="modal:open">
                                 <img src="<?=$base;?>media/uploads/<?=$item->body;?>" />
                             </a>
-                            <div id="modal-1" style="display:none">
+                            <div id="modal-<?=$key?>" style="display:none">
                                 <img src="<?=$base;?>media/uploads/<?=$item->body;?>" />
                             </div>
                         </div>
